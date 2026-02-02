@@ -11,48 +11,49 @@
 body {
     font-family: sans-serif;
     margin: 30px;
-    background-color: #f3edf7; /* 浅粉紫 */
+    background-color: #f3edf7;
 }
 
-/* 输入框 & 输出框宽度占满屏幕 */
+/* ===============================
+   输入框 & 输出框（内容字体在这里改）
+   font-family: 控制框内文字字体
+   font-size: 控制框内文字大小
+   =============================== */
 textarea,
 pre {
     width: 100%;
     box-sizing: border-box;
-    font-size: 16px;
+    font-family: Verdana, sans-serif;   /* ← 框内文字字体 */
+    font-size: 16px;                    /* ← 框内文字字号 */
     margin-bottom: 12px;
     padding: 8px;
     border-radius: 6px;
     border: 1px solid #ccc;
 }
 
-/* 输入框纵向高度 */
-#kingdoms {
-    height: 170px;      /* 第一个输入框高 */
-}
-#attendees {
-    height: 120px;       /* 第二个输入框高 */
-}
+/* 输入框高度 */
+#kingdoms { height: 170px; }
+#attendees { height: 120px; }
 
 /* 输出框高度 */
 pre {
-    height: 170px;      
+    height: 170px;
     background: #ffffff;
     white-space: pre-wrap;
     word-wrap: break-word;
     overflow-y: auto;
 }
 
-/* 主按钮 */
+/* ===============================
+   所有按钮统一风格（未改）
+   =============================== */
 button {
-    padding: 12px 26px;
-    font-size: 18px;
+    padding: 10px 22px;
+    font-size: 16px;
     font-family: "Trebuchet MS", sans-serif;
     font-weight: bold;
-    margin-top: 12px;  /* 按钮下移一行 */
-    margin-bottom: 12px;
     cursor: pointer;
-    background-color: #d6b7e6; /* 深一点粉紫 */
+    background-color: #d6b7e6;
     border: none;
     border-radius: 10px;
     color: #333;
@@ -62,42 +63,99 @@ button:hover {
     background-color: #c9a4dd;
 }
 
-label {
-    font-weight: bold;
+/* 主按钮 */
+.main-btn {
+    margin-top: 12px;
+    margin-bottom: 12px;
+    font-size: 20px;
+    padding: 12px 26px;
 }
 
-/* 手机屏幕自适应放大 */
+/* PASTE / COPY 按钮 */
+.small-btn {
+    position: absolute;
+    z-index: 10;
+    padding: 6px 14px;
+    font-size: 16px;
+}
+
+.paste-btn {
+    top: 6px;
+    right: 6px;
+}
+
+.copy-btn {
+    bottom: 6px;
+    right: 6px;
+}
+
+/* ===============================
+   label 样式（标题文字在这里改）
+   font-size: 控制“Enter xxx”字号
+   margin-bottom: 控制与文本框的距离
+   =============================== */
+label {
+    font-weight: bold;
+    font-size: 18px;        /* ← 标题文字字号（这里调） */
+    display: block;
+    margin-bottom: 7px;    /* ← 标题与文本框之间的空白 */
+}
+
+/* 容器（用于按钮定位） */
+.box {
+    position: relative;
+    width: 100%;
+}
+
+/* ===============================
+   手机屏幕自动放大（未改）
+   =============================== */
 @media (max-width: 768px) {
-    body {
-        margin: 10px;
-    }
-    textarea, pre {
-        font-size: 18px;
-        padding: 10px;
-    }
-    button {
-        font-size: 20px;
-        padding: 14px 28px;
-    }
+    body { margin: 10px; }
+    textarea, pre { font-size: 18px; }
+    button { font-size: 18px; }
 }
 </style>
 </head>
 
 <body>
 
-<label>Enter Kindoms' names:</label><br>
-<textarea id="kingdoms"
-placeholder="GoC or RAG&#10;jabber:&#10;mort:&#10;......"></textarea><br>
+<label>Enter Kindoms' names:</label>
+<div class="box">
+    <button class="small-btn paste-btn" onclick="pasteTo('kingdoms')">PASTE</button>
+    <textarea id="kingdoms"
+        placeholder="GoC or RAG&#10;jabber:&#10;mort:&#10;......"></textarea>
+</div>
 
-<label>Enter attendees:</label><br>
-<textarea id="attendees"
-placeholder="chikki,chaos,gilver, ......"></textarea><br>
+<label>Enter attendees:</label>
+<div class="box">
+    <button class="small-btn paste-btn" onclick="pasteTo('attendees')">PASTE</button>
+    <textarea id="attendees"
+        placeholder="chikki,chaos,gilver, ......"></textarea>
+</div>
 
-<button onclick="runPython()">Generate Groupings</button>
+<button class="main-btn" onclick="runPython()">Generate Groupings</button>
 
-<pre id="output"></pre>
+<div class="box">
+    <pre id="output"></pre>
+    <button class="small-btn copy-btn" onclick="copyOutput()">COPY</button>
+</div>
 
 <script>
+async function pasteTo(id) {
+    try {
+        const text = await navigator.clipboard.readText();
+        document.getElementById(id).value = text;
+    } catch (err) {
+        alert("Clipboard access denied");
+    }
+}
+
+function copyOutput() {
+    const text = document.getElementById("output").textContent;
+    navigator.clipboard.writeText(text);
+}
+
 async function runPython() {
     const outputElem = document.getElementById("output");
     outputElem.textContent = "Running...\n";
@@ -171,9 +229,10 @@ output_text
         let result = await pyodide.runPythonAsync(pythonCode);
         outputElem.textContent = result;
     } catch(err) {
-        outputElem.textContent = "Error:\n" + err;
+        outputElem.textContent = "Error:\\n" + err;
     }
 }
 </script>
+
 </body>
 </html>
