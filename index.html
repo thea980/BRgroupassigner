@@ -146,7 +146,7 @@ label {
 
 <div class="box">
     <pre id="output"></pre>
-    <button class="small-btn copy-btn" onclick="copyOutput()">COPY</button>
+    <button id="copyBtn" class="small-btn copy-btn" onclick="copyOutput()">COPY</button>
     <div id="copyHint" class="copy-hint">Copied!</div>
 </div>
 
@@ -162,11 +162,19 @@ async function pasteTo(id) {
 
 function copyOutput() {
     const text = document.getElementById("output").textContent;
+    const copyBtn = document.getElementById("copyBtn");
     navigator.clipboard.writeText(text).then(() => {
+        // 显示小提示
         const hint = document.getElementById("copyHint");
         hint.style.opacity = "1";
+
+        // 按钮短暂变为 ✓
+        const originalText = copyBtn.textContent;
+        copyBtn.textContent = "✓";
+
         setTimeout(() => {
             hint.style.opacity = "0";
+            copyBtn.textContent = originalText;
         }, 1500);
     });
 }
