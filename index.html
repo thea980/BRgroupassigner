@@ -190,27 +190,67 @@ async function runPython() {
     let attendeesText = JSON.stringify(document.getElementById("attendees").value);
 
     let pythonCode = `
+
+# 🔴python代码🔴 开始
+
 import random
 
+# 🟦=====【A. 别名 ➡️ 标准名字（自动小写版）】==============
+
+NAME_MAP = {
+    "cappy": "chikki",
+    "babychick": "baby",
+    "mays": "may",
+    "mayo": "may2"
+
+    # 可以继续添加其他别名【注意是在B区规则里的特殊名字，才需要添加】
+}
+# 🟦====================================================
+
+# 🟩=====【B. 优先排序 / 互斥组（以标准名字为准）】===========
+
 MANUAL_PRIORITY = {"willy","sera"}
-CONFLICTS = {("wiwi","willy"),("chikki","baby"),("may","may2"),("yue","yue2"),("sera","sera2"),("willy","sera")}
+CONFLICTS = {
+    ("wiwi","willy"),
+    ("chikki","baby"),
+    ("may","may2"),
+    ("yue","yue2"),
+    ("sera","sera2"),
+    ("willy","sera")
+}
+
+# 🟩=====================================================
 
 def conflict(a, b):
     return (a, b) in CONFLICTS or (b, a) in CONFLICTS
 
+# ===== 输入处理 =====
 input_text = ${kingdomsText}
 parts = input_text.split(":")
 GROUP_COUNT = len(parts) - 1
 
 text = ${attendeesText}
-items = [x.strip() for x in text.split(",") if x.strip()]
 
+# ==== 对 items 做统一处理：大小写/别名 ==========
+raw_items = [x.strip() for x in text.split(",") if x.strip()]
+items = []
+display_name = {}
+
+for name in raw_items:
+    key = NAME_MAP.get(name.lower(), name.lower())  # 自动小写 + 映射
+    items.append(key)
+    display_name[key] = name  # 保留原始输入，用于输出显示
+
+
+# ===== 计算冲突数量 =====
 conflict_count = {item: sum(conflict(item, other) for other in items if other != item) for item in items}
 
 def priority_key(item):
     return (0 if item in MANUAL_PRIORITY else 1, -conflict_count[item], random.random())
 
+# ===== 按优先级排序 =====
 items_sorted = sorted(items, key=priority_key)
+
 MAX_TRIES = 5000
 best_result = None
 
@@ -228,8 +268,7 @@ while best_result is None:
                 if g not in candidates: continue
                 new_len = len(g) + 1
                 prev_ok = (idx == 0) or (len(groups[idx - 1]) >= new_len)
-                next_ok = (idx == len(groups) - 1) or (new_len >= len(groups[idx + 1])
-                )
+                next_ok = (idx == len(groups) - 1) or (new_len >= len(groups[idx + 1]))
                 if prev_ok and next_ok: valid_candidates.append((len(g), idx, g))
             if not valid_candidates: break
             min_len = min(x[0] for x in valid_candidates)
@@ -242,12 +281,17 @@ while best_result is None:
     if best_result is None:
         random.shuffle(items_sorted)
 
+# ===== 输出结果 =====
 output_text = parts[0]
 for i in range(len(best_result)):
-    list_text = ",".join(best_result[i])
+    list_text = ",".join(display_name[x] for x in best_result[i])
     output_text += ": " + list_text + parts[i + 1]
 
 output_text
+
+
+# 🔴python代码🔴 结束
+
 `;
 
     try {
