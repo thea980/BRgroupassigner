@@ -133,7 +133,7 @@ placeholder="  G / R&#10;1Jabber:&#10;2Mort:&#10  ......&#10(A COLON IS REQUIRED
 <label>Enter attendees:</label>
 <div class="box">
 <textarea id="attendees"
-placeholder="cappy,chaos,mia,ven,tia, ......"></textarea>
+placeholder="cappy,chaos,mia,ven,tia, ......&#10(Each name should be separated by a comma.)"></textarea>
 <button class="small-btn paste-btn" onclick="pasteTo('attendees')">PASTE</button>
 </div>
 
@@ -206,22 +206,36 @@ display_name = {}
 
 for i,name in enumerate(raw_items):
     key = NAME_MAP.get(name.lower(), name.lower())
-    uid = key+"__"+str(i)
+    uid = key + "__" + str(i)
     items.append(uid)
     display_name[uid] = name
 
 
-# ===== 按顺序轮流分组 =====
+# ===== 连续均衡分组 =====
 
-groups = [[] for _ in range(GROUP_COUNT)]
+groups = []
 
-for i,item in enumerate(items):
-    groups[i % GROUP_COUNT].append(item)
+n = len(items)
+base_size = n // GROUP_COUNT
+extra = n % GROUP_COUNT
+
+index = 0
+
+for g in range(GROUP_COUNT):
+
+    size = base_size + (1 if g < extra else 0)
+
+    group = items[index:index + size]
+
+    groups.append(group)
+
+    index += size
+
 
 best_result = groups
 
 
-# ===== 输出 =====
+# ===== 输出结果 =====
 
 output_text = parts[0]
 
