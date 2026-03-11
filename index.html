@@ -19,8 +19,8 @@ textarea,
 pre {
     width: 100%;
     box-sizing: border-box;
-    font-family: Verdana, sans-serif; /* 框内文字字体 */
-    font-size: 16px;                  /* 框内文字字号 */
+    font-family: Verdana, sans-serif; 
+    font-size: 16px;                  
     margin-bottom: 12px;
     padding: 8px;
     border-radius: 6px;
@@ -38,7 +38,6 @@ pre {
     overflow-y: auto;
 }
 
-/* 按钮 */
 button {
     font-family: "Trebuchet MS", sans-serif;
     font-weight: bold;
@@ -48,7 +47,6 @@ button {
     border-radius: 10px;
     color: #333;
 
-    /* 立体阴影效果（略小） */
     box-shadow: 2px 2px 4px rgba(0,0,0,0.3);
     transition: all 0.1s ease-in-out;
 }
@@ -59,12 +57,10 @@ button:hover {
 }
 
 button:active {
-    /* 按下去的挤压效果 */
     transform: translate(1px, 1px);
     box-shadow: 1px 1px 2px rgba(0,0,0,0.3);
 }
 
-/* 主按钮 */
 .main-btn {
     display: block;
     margin-top: 10px;
@@ -73,7 +69,6 @@ button:active {
     padding: 12px 26px;
 }
 
-/* PASTE / COPY 按钮 */
 .small-btn {
     padding: 6px 14px;
     font-size: 16px;
@@ -81,19 +76,16 @@ button:active {
     z-index: 10;
 }
 
-/* PASTE 按钮上方6px */
 .paste-btn {
-    top: -36px; /* 上移到文本框上方6px */
+    top: -36px;
     right: 10px;
 }
 
-/* COPY 按钮右下角 */
 .copy-btn {
     bottom: 6px;
     right: 10px;
 }
 
-/* COPY 成功提示 */
 .copy-hint {
     position: absolute;
     bottom: 48px;
@@ -108,7 +100,6 @@ button:active {
     pointer-events: none;
 }
 
-/* 标签样式（字号和空白行距离） */
 label {
     font-weight: bold;
     font-size: 18px;
@@ -116,13 +107,11 @@ label {
     margin-bottom: 7px;
 }
 
-/* 容器，用于定位按钮 */
 .box {
     position: relative;
     width: 100%;
 }
 
-/* 手机屏幕自适应放大，并保持阴影立体感 */
 @media (max-width: 768px) {
     body { margin: 10px; }
     textarea, pre { font-size: 18px; }
@@ -136,27 +125,32 @@ label {
 
 <label>Enter Kindoms' names:</label>
 <div class="box">
-    <textarea id="kingdoms"
-        placeholder="  GoC / RAG&#10;>Jabber:&#10;>Mort:&#10  ......&#10(A COLON IS REQUIRED after each name; other formatting is flexible.)"></textarea>
-    <button class="small-btn paste-btn" onclick="pasteTo('kingdoms')">PASTE</button>
+<textarea id="kingdoms"
+placeholder="  GoC / RAG&#10;1 Jabber:&#10;2 Mort:&#10  ......&#10(A COLON IS REQUIRED after each name; other formatting is flexible.)"></textarea>
+<button class="small-btn paste-btn" onclick="pasteTo('kingdoms')">PASTE</button>
 </div>
 
 <label>Enter attendees:</label>
 <div class="box">
-    <textarea id="attendees"
-        placeholder="cappy,chaos,gilver, ......"></textarea>
-    <button class="small-btn paste-btn" onclick="pasteTo('attendees')">PASTE</button>
+<textarea id="attendees"
+placeholder="cappy,chaos,gilver, ......"></textarea>
+<button class="small-btn paste-btn" onclick="pasteTo('attendees')">PASTE</button>
 </div>
 
 <button class="main-btn" onclick="runPython()">Generate Groupings</button>
 
 <div class="box">
-    <pre id="output"></pre>
-    <button id="copyBtn" class="small-btn copy-btn" onclick="copyOutput()">COPY</button>
-    <div id="copyHint" class="copy-hint">Copied!</div>
+<pre id="output"></pre>
+<button id="copyBtn" class="small-btn copy-btn" onclick="copyOutput()">COPY</button>
+<div id="copyHint" class="copy-hint">Copied!</div>
 </div>
 
 <script>
+
+let pyodideReadyPromise = loadPyodide({
+    indexURL:"https://cdn.jsdelivr.net/pyodide/v0.23.4/full/"
+});
+
 async function pasteTo(id) {
     try {
         const text = await navigator.clipboard.readText();
@@ -182,124 +176,128 @@ function copyOutput() {
 }
 
 async function runPython() {
-    const outputElem = document.getElementById("output");
-    outputElem.textContent = "Running...\n";
 
-    let pyodide = await loadPyodide({indexURL:"https://cdn.jsdelivr.net/pyodide/v0.23.4/full/"});
-    let kingdomsText = JSON.stringify(document.getElementById("kingdoms").value);
-    let attendeesText = JSON.stringify(document.getElementById("attendees").value);
+const outputElem = document.getElementById("output");
+outputElem.textContent = "Running...\n";
 
-    let pythonCode = `
+let pyodide = await pyodideReadyPromise;
 
-# 🔴python代码🔴 开始
+let kingdomsText = JSON.stringify(document.getElementById("kingdoms").value);
+let attendeesText = JSON.stringify(document.getElementById("attendees").value);
+
+let pythonCode = `
 
 import random
 
-# 🟦=====【A. 别名 ➡️ 标准名字（自动小写版）】==============
-
 NAME_MAP = {
     "cappy": "chikki",
-    "babychick": "baby",
-    "mays": "may",
-    "mayo": "may2"
-
-    # 可以继续添加其他别名【注意是在B区规则里的特殊名字，才需要添加】
+    "babychick": "baby"
 }
-# 🟦====================================================
 
-# 🟩=====【B. 优先排序 / 互斥组（以标准名字为准）】===========
-
-MANUAL_PRIORITY = {"willy","sera"}
 CONFLICTS = {
     ("wiwi","willy"),
     ("chikki","baby"),
-    ("may","may2"),
-    ("yue","yue2"),
     ("sera","sera2"),
-    ("willy","sera")
 }
 
-# 🟩=====================================================
-
 def conflict(a, b):
+    a=a.split("__")[0]
+    b=b.split("__")[0]
     return (a, b) in CONFLICTS or (b, a) in CONFLICTS
 
-# ===== 输入处理 =====
 input_text = ${kingdomsText}
 parts = input_text.split(":")
 GROUP_COUNT = len(parts) - 1
 
 text = ${attendeesText}
 
-# ==== 对 items 做统一处理：大小写/别名 ==========
 raw_items = [x.strip() for x in text.split(",") if x.strip()]
 items = []
 display_name = {}
 
-for name in raw_items:
-    key = NAME_MAP.get(name.lower(), name.lower())  # 自动小写 + 映射
-    items.append(key)
-    display_name[key] = name  # 保留原始输入，用于输出显示
+for i,name in enumerate(raw_items):
+    key = NAME_MAP.get(name.lower(), name.lower())
+    uid = key+"__"+str(i)
+    items.append(uid)
+    display_name[uid] = name
 
-
-# ===== 计算冲突数量 =====
 conflict_count = {item: sum(conflict(item, other) for other in items if other != item) for item in items}
 
 def priority_key(item):
-    return (0 if item in MANUAL_PRIORITY else 1, -conflict_count[item], random.random())
+    return (-conflict_count[item], random.random())
 
-# ===== 按优先级排序 =====
 items_sorted = sorted(items, key=priority_key)
 
 MAX_TRIES = 5000
 best_result = None
 
 while best_result is None:
+
     for _ in range(MAX_TRIES):
+
         groups = [[] for _ in range(GROUP_COUNT)]
+
         for i in range(min(GROUP_COUNT, len(items_sorted))):
             groups[i].append(items_sorted[i])
+
         rest = items_sorted[GROUP_COUNT:]
+
         for item in rest:
+
             candidates = [g for g in groups if not any(conflict(item, x) for x in g)]
-            if not candidates: break
+
+            if not candidates:
+                break
+
             valid_candidates = []
+
             for idx, g in enumerate(groups):
-                if g not in candidates: continue
+
+                if g not in candidates:
+                    continue
+
                 new_len = len(g) + 1
+
                 prev_ok = (idx == 0) or (len(groups[idx - 1]) >= new_len)
                 next_ok = (idx == len(groups) - 1) or (new_len >= len(groups[idx + 1]))
-                if prev_ok and next_ok: valid_candidates.append((len(g), idx, g))
-            if not valid_candidates: break
+
+                if prev_ok and next_ok:
+                    valid_candidates.append((len(g), idx, g))
+
+            if not valid_candidates:
+                break
+
             min_len = min(x[0] for x in valid_candidates)
             min_candidates = [x for x in valid_candidates if x[0] == min_len]
+
             _, _, target = random.choice(min_candidates)
+
             target.append(item)
+
         else:
             best_result = groups
             break
+
     if best_result is None:
         random.shuffle(items_sorted)
 
-# ===== 输出结果 =====
 output_text = parts[0]
+
 for i in range(len(best_result)):
     list_text = ",".join(display_name[x] for x in best_result[i])
     output_text += ": " + list_text + parts[i + 1]
 
 output_text
 
-
-# 🔴python代码🔴 结束
-
 `;
 
-    try {
-        let result = await pyodide.runPythonAsync(pythonCode);
-        outputElem.textContent = result;
-    } catch(err) {
-        outputElem.textContent = "Error:\\n" + err;
-    }
+try {
+    let result = await pyodide.runPythonAsync(pythonCode);
+    outputElem.textContent = result;
+} catch(err) {
+    outputElem.textContent = "Error:\\n" + err;
+}
+
 }
 </script>
 
